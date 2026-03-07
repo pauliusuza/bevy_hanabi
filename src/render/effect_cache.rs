@@ -26,7 +26,7 @@ use crate::{
     asset::EffectAsset,
     render::{
         calc_hash, event::GpuChildInfo, GpuDrawIndexedIndirectArgs, GpuDrawIndirectArgs,
-        GpuEffectMetadata, GpuIndirectIndex, GpuSpawnerParams, StorageType as _,
+        GpuEffectMetadata, GpuIndirectIndex, StorageType as _,
     },
     ParticleLayout,
 };
@@ -322,9 +322,7 @@ impl ParticleSlab {
         // Create the render layout.
         // TODO - move; this only depends on the particle and spawner layouts, can be
         // shared across slabs
-        let spawner_params_size = GpuSpawnerParams::aligned_size(
-            render_device.limits().min_storage_buffer_offset_alignment,
-        );
+        // FIXME - duplicated in ParticlesRenderPipeline::specialize()
         let label = format!("hanabi:bgl:render:particles@1:slab{}", slab_id.0);
         let render_particles_buffer_layout = render_device.create_bind_group_layout(
             &label[..],
@@ -336,8 +334,6 @@ impl ParticleSlab {
                         .visibility(ShaderStages::VERTEX_FRAGMENT),
                     // @group(1) @binding(1) var<storage, read> indirect_buffer : IndirectBuffer;
                     storage_buffer_read_only::<GpuIndirectIndex>(false),
-                    // @group(1) @binding(2) var<storage, read> spawner : Spawner;
-                    storage_buffer_read_only_sized(true, Some(spawner_params_size)),
                 ),
             ),
         );
@@ -757,18 +753,6 @@ impl CachedDrawIndirectArgs {
     fn get_row_raw(&self) -> BufferTableId {
         self.row
     }
-}
-
-/// The indices in the indirect dispatch buffers for a single effect, as well as
-/// that of the metadata buffer.
-#[derive(Debug, Default, Clone, Copy, Component)]
-pub(crate) struct DispatchBufferIndices {
-    /// The index of the [`GpuDispatchIndirect`] row in the GPU buffer
-    /// [`EffectsMeta::update_dispatch_indirect_buffer`].
-    ///
-    /// [`GpuDispatchIndirect`]: super::GpuDispatchIndirect
-    /// [`EffectsMeta::update_dispatch_indirect_buffer`]: super::EffectsMeta::dispatch_indirect_buffer
-    pub(crate) update_dispatch_indirect_buffer_row_index: u32,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
