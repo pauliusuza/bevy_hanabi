@@ -81,7 +81,8 @@ getrandom = { version = "0.3", default-features = false, features = [
 ] }
 
 [dependencies.bevy]
-version = "0.18"
+git = "https://github.com/bevyengine/bevy", 
+rev = "53050f9"
 default-features = false
 features = [
   "bevy_core_pipeline",
